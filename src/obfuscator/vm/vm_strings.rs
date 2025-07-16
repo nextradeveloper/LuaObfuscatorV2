@@ -460,14 +460,6 @@ local function run_lua_func(state, env, upvals)
 		return inst[$IS_KC$] and inst[$CONST_C$] or memory[inst[$C_REGISTER$]]
 	end
 
-	local function safe_arith(a, b, op)
-		-- FiveM compatibility: treat nil values as 0 for arithmetic operations
-		-- This is common in game scripting environments where undefined values default to 0
-		a = a or 0
-		b = b or 0
-		return op(a, b)
-	end
-
 	while true do
 		local inst = code[pc]
 		local op = inst[$OPCODE$]
