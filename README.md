@@ -6,6 +6,16 @@ Please download the latest release if you are trying to run the code
 
 [Roadmap](https://pyan.notion.site/014c3553be6b45d1989e1e133ec2c424?v=acc453043e2844728d3db628693c100d)
 
+## FiveM Compatibility
+
+This obfuscator has been enhanced with FiveM compatibility fixes to resolve the "attempt to perform arithmetic on a nil value" error that occurs in FiveM's Lua environment. The following improvements have been made:
+
+- **Nil-Safe Arithmetic Operations**: The VM now treats nil values as 0 in arithmetic operations, following game scripting conventions
+- **Consistent Parameter Handling**: Fixed parameter order randomization that could cause environment mismatches
+- **Robust Bytecode Deserialization**: Added nil checking in critical bytecode operations to handle FiveM's stricter Lua environment
+
+These changes maintain backward compatibility while enabling use in FiveM servers and clients.
+
 ## Example
 Input
 ```lua

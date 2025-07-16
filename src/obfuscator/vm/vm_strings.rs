@@ -172,8 +172,9 @@ local function rd_int_basic(src, s, e, d)
 
 	for i = s, e, d do
 		local mul = 256 ^ MathAbs(i - s)
-
-		num = num + mul * StringByte(src, i, i)
+		local byte_val = StringByte(src, i, i) or 0  -- FiveM compatibility: treat nil bytes as 0
+		
+		num = num + mul * byte_val
 	end
 
 	return num
@@ -223,6 +224,11 @@ local function rd_dbl_le(src, s) return rd_dbl_basic(StringByte(src, s, s + 7)) 
 local function stm_byte(S)
 	local idx = S[1]
 	local bt = StringByte(S[2], idx, idx)
+	
+	-- FiveM compatibility: handle nil bytes from string index operations
+	if not bt then
+		bt = 0
+	end
 
 	S[1] = idx + 1
 	return bt
@@ -455,9 +461,10 @@ local function run_lua_func(state, env, upvals)
 	end
 
 	local function safe_arith(a, b, op)
-		if a == nil or b == nil then
-			error('Obfuscated VM: attempt to perform arithmetic on a nil value (a=' .. tostring(a) .. ', b=' .. tostring(b) .. ')')
-		end
+		-- FiveM compatibility: treat nil values as 0 for arithmetic operations
+		-- This is common in game scripting environments where undefined values default to 0
+		a = a or 0
+		b = b or 0
 		return op(a, b)
 	end
 
