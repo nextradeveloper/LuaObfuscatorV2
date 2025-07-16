@@ -5,6 +5,7 @@ use lua_deserializer::{
     structs::chunk::Chunk,
 };
 use rand::seq::SliceRandom;
+use regex;
 
 use crate::{
     obfuscation_settings::ObfuscationSettings, obfuscator::obfuscation_context::ObfuscationContext,
@@ -148,6 +149,9 @@ impl VMGenerator {
 
         let obfuscation_context =
             create_context(constant_list, opcode_list.clone(), chunk_component_list);
+
+        // Calculate seed for deterministic obfuscation before moving main_chunk
+        let seed = main_chunk.constants.len() + main_chunk.instructions.len();
 
         let mut serializer = Serializer::new(obfuscation_context.clone(), settings.clone());
         let bytes = serializer.serialze(main_chunk);
@@ -302,14 +306,15 @@ impl VMGenerator {
             vm_string += &format!("lua_wrap_state(lua_bc_to_state('{}'))()", bytecode_string);
         }
 
+        // Re-enable field mapping randomization for better obfuscation security
         let rename_map = [
             "OPCODE",
-            "A_REGISTER",
+            "A_REGISTER", 
             "B_REGISTER",
             "C_REGISTER",
             "IS_CONST",
             "IS_KB",
-            "IS_KC",
+            "IS_KC", 
             "CONSTANT",
             "CONST_B",
             "CONST_C",
@@ -317,14 +322,23 @@ impl VMGenerator {
             "UPVALUE_COUNT",
             "PARAMETER_COUNT",
             "CONSTANT_LIST",
-            "OPCODE_LIST",
+            "OPCODE_LIST", 
             "PROTO_LIST",
             "LINE_LIST",
         ];
-        // Keep fixed mapping to ensure consistency between opcode strings and field access
+        
+        // Create a consistent mapping that doesn't break field access
+        // Instead of random shuffling, use a seeded permutation based on the bytecode
+        let mut indices: Vec<usize> = (1..=rename_map.len()).collect();
+        
+        // Simple deterministic shuffle based on seed
+        for i in 0..indices.len() {
+            let j = (seed + i * 7) % indices.len();
+            indices.swap(i, j);
+        }
 
         for (i, rename) in rename_map.iter().enumerate() {
-            vm_string = vm_string.replace(&format!("${}$", *rename), &(i + 1).to_string());
+            vm_string = vm_string.replace(&format!("${}$", *rename), &indices[i].to_string());
         }
 
         let move_opcode = opcode_list.iter().position(|&r| r == OpcodeType::OpMove);
@@ -339,6 +353,26 @@ impl VMGenerator {
         if getupval_opcode != None {
             vm_string =
                 vm_string.replace("$GETUPVAL_OPCODE$", &getupval_opcode.unwrap().to_string());
+        }
+
+        // Generate obfuscated variable names that are harder to understand
+        let var_replacements = [
+            ("memory", format!("_{}", indices[0])),
+            ("env", format!("_{}_{}", indices[1], indices[2])),
+            ("state", format!("_{}x{}", indices[3], indices[4])),
+            ("proto", format!("_p{}", indices[5])),
+            ("stream", format!("_s{}", indices[6])),
+            ("code", format!("_c{}", indices[7])),
+            ("inst", format!("_i{}", indices[8])),
+            ("pc", format!("_pc{}", indices[9] % 10)),
+            ("op", format!("_op{}", indices[10] % 10)),
+        ];
+        
+        for (original, replacement) in var_replacements.iter() {
+            // Only replace whole words to avoid breaking substrings
+            let word_regex = format!(r"\b{}\b", regex::escape(original));
+            vm_string = regex::Regex::new(&word_regex).unwrap()
+                .replace_all(&vm_string, replacement).to_string();
         }
 
         vm_string
