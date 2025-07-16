@@ -454,6 +454,13 @@ local function run_lua_func(state, env, upvals)
 		return inst[$IS_KC$] and inst[$CONST_C$] or memory[inst[$C_REGISTER$]]
 	end
 
+	local function safe_arith(a, b, op)
+		if a == nil or b == nil then
+			error('Obfuscated VM: attempt to perform arithmetic on a nil value (a=' .. tostring(a) .. ', b=' .. tostring(b) .. ')')
+		end
+		return op(a, b)
+	end
+
 	while true do
 		local inst = code[pc]
 		local op = inst[$OPCODE$]

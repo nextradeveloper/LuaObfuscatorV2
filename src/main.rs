@@ -62,11 +62,23 @@ fn main() {
 
     println!("[Obfuscator] Compiling...");
 
-    Command::new(luac_command)
+    let compile_output = Command::new(luac_command)
         .arg("temp2.lua")
         .current_dir("temp")
         .output()
-        .expect("Failed to compile lua binary");
+        .expect("Failed to spawn luac process");
+
+    if !compile_output.status.success() {
+        println!("[Obfuscator] luac failed with status: {}", compile_output.status);
+        println!("stdout: {}", String::from_utf8_lossy(&compile_output.stdout));
+        println!("stderr: {}", String::from_utf8_lossy(&compile_output.stderr));
+        return;
+    }
+
+    if !Path::new("temp/luac.out").exists() {
+        println!("[Obfuscator] luac.out was not created!");
+        return;
+    }
 
     println!("[Obfuscator] Reading file...");
 
@@ -98,7 +110,7 @@ fn main() {
     if args.run {
         println!("[Obfuscator] Running...");
 
-        let output = Command::new("lua")
+        let output = Command::new("luac")
             .arg(FINAL_FILE)
             .current_dir("temp")
             .output()

@@ -29,13 +29,13 @@ pub fn get_opcode_string(opcode: &OpcodeType, opcode_list: &Vec<OpcodeType>) -> 
             "memory[inst[$A_REGISTER$] + 1] = memory[inst[$B_REGISTER$]]
         memory[inst[$A_REGISTER$]] = memory[inst[$B_REGISTER$]][constantC(inst)]".to_string()
         }
-        OpcodeType::OpAdd => "memory[inst[$A_REGISTER$]] = constantB(inst) + constantC(inst)".to_string(),
-        OpcodeType::OpSub => "memory[inst[$A_REGISTER$]] = constantB(inst) - constantC(inst)".to_string(),
-        OpcodeType::OpMul => "memory[inst[$A_REGISTER$]] = constantB(inst) * constantC(inst)".to_string(),
-        OpcodeType::OpDiv => "memory[inst[$A_REGISTER$]] = constantB(inst) / constantC(inst)".to_string(),
-        OpcodeType::OpMod => "memory[inst[$A_REGISTER$]] = constantB(inst) % constantC(inst)".to_string(),
-        OpcodeType::OpPow => "memory[inst[$A_REGISTER$]] = constantB(inst) ^ constantC(inst)".to_string(),
-        OpcodeType::OpUnm => "memory[inst[$A_REGISTER$]] = -memory[inst[$B_REGISTER$]]".to_string(),
+        OpcodeType::OpAdd => "memory[inst[$A_REGISTER$]] = safe_arith(constantB(inst), constantC(inst), function(x, y) return x + y end)".to_string(),
+        OpcodeType::OpSub => "memory[inst[$A_REGISTER$]] = safe_arith(constantB(inst), constantC(inst), function(x, y) return x - y end)".to_string(),
+        OpcodeType::OpMul => "memory[inst[$A_REGISTER$]] = safe_arith(constantB(inst), constantC(inst), function(x, y) return x * y end)".to_string(),
+        OpcodeType::OpDiv => "memory[inst[$A_REGISTER$]] = safe_arith(constantB(inst), constantC(inst), function(x, y) return x / y end)".to_string(),
+        OpcodeType::OpMod => "memory[inst[$A_REGISTER$]] = safe_arith(constantB(inst), constantC(inst), function(x, y) return x % y end)".to_string(),
+        OpcodeType::OpPow => "memory[inst[$A_REGISTER$]] = safe_arith(constantB(inst), constantC(inst), function(x, y) return x ^ y end)".to_string(),
+        OpcodeType::OpUnm => "memory[inst[$A_REGISTER$]] = safe_arith(0, memory[inst[$B_REGISTER$]], function(x, y) return x - y end)".to_string(),
         OpcodeType::OpNot => "memory[inst[$A_REGISTER$]] = not memory[inst[$B_REGISTER$]]".to_string(),
         OpcodeType::OpLen => "memory[inst[$A_REGISTER$]] = #memory[inst[$B_REGISTER$]]".to_string(),
         OpcodeType::OpConcat => {

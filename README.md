@@ -58,7 +58,7 @@ cd minifier && npm i && cd ..
 
 6) Run the project using cargo
 ```
-cargo run -- --file YOURFILE.lua
+cargo run -- --file input.lua
 ```
 
 ## Related Repos
