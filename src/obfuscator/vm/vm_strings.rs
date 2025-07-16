@@ -24,18 +24,30 @@ local Pairs = pairs
 local IPairs = ipairs
 local TableConcat = Table.concat
 local TableInsert = Table.insert
-local function TableUnpack(tbl, i, j)
+local function TableUnpack(tbl, i, j, depth)
     i = i or 1
     j = j or #tbl
+    depth = depth or 0
+    
+    -- Protection against infinite recursion
+    if depth > 10 then
+        error(\"TableUnpack recursion depth exceeded\")
+    end
+    
     if j-i+1 >= 10 then
         return tbl[i], tbl[i + 1], tbl[i + 2], tbl[i + 3], tbl[i + 4],
                tbl[i + 5], tbl[i + 6], tbl[i + 7], tbl[i + 8], tbl[i + 9],
-               TableUnpack(tbl, i + 10, j)
+               TableUnpack(tbl, i + 10, j, depth + 1)
     end
-    if i <= j then return tbl[i], TableUnpack(tbl, i + 1, j) end
+    if i <= j then return tbl[i], TableUnpack(tbl, i + 1, j, depth + 1) end
 end
 local TableCreate = function(len)
-	return {TableUnpack({}, 1, len or 1)}
+	-- Simplified table creation without calling TableUnpack on empty table
+	local tbl = {}
+	for i = 1, len or 1 do
+		tbl[i] = nil
+	end
+	return tbl
 end
 local TablePack = function(...)
 	return { n = Select(StringChar(35), ...), ... }
@@ -184,7 +196,6 @@ local getBitwise = (function()
 	return band, brshift, blshift
 end)
 local BitAnd, BitRShift, BitLShift = getBitwise()
-print(\"Bitwise operations initialized\")
 ";
 
 pub static DESERIALIZER: &str = "
