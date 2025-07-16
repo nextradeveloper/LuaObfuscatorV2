@@ -509,8 +509,6 @@ local function run_lua_func(state, env, upvals)
 	while true do
 		local inst = code[pc]
 		local op = inst[$OPCODE$]
-		-- Debug: Print instruction being executed
-		if pc <= 10 then print(\"Executing instruction \" .. pc .. \" opcode \" .. op) end
 		pc = pc + 1
 
 ";
