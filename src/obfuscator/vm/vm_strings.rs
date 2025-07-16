@@ -79,13 +79,38 @@ end
 
 local getBitwise = (function()
 	local function tobittable_r(x, ...)
-		if (x or 0) == 0 then
-			return ...
+		-- Iterative approach to avoid deep recursion
+		local bits = {}
+		local num = x or 0
+		
+		-- Safety check for infinite loops
+		local iterations = 0
+		while num > 0 and iterations < 100 do
+			bits[#bits + 1] = num % 2
+			num = MathFloor(num / 2)
+			iterations = iterations + 1
 		end
-		return tobittable_r(MathFloor(x / 2), x % 2, ...)
+		
+		-- Add any additional arguments
+		local args = {...}
+		for i = 1, #args do
+			bits[#bits + 1] = args[i]
+		end
+		
+		-- Reverse to match original order
+		local result = {}
+		for i = #bits, 1, -1 do
+			result[#result + 1] = bits[i]
+		end
+		
+		return TableUnpack(result)
 	end
 
 	local function tobittable(x)
+		-- Ensure x is a valid number
+		if type(x) ~= \"number\" or x ~= x then -- NaN check
+			return { 0 }
+		end
 		if x == 0 then
 			return { 0 }
 		end
@@ -94,20 +119,29 @@ local getBitwise = (function()
 
 	local function makeop(cond)
 		local function oper(x, y, ...)
-			if not y then
-				return x
-			end
-			x, y = tobittable(x), tobittable(y)
-			local xl, yl = #x, #y
-			local t, tl = {}, MathMax(xl, yl)
-			for i = 0, tl - 1 do
-				local b1, b2 = x[xl - i], y[yl - i]
-				if not (b1 or b2) then
-					break
+			-- Handle multiple arguments iteratively instead of recursively
+			local args = {x, y, ...}
+			local result = args[1]
+			
+			for i = 2, #args do
+				if args[i] == nil then break end
+				
+				local lhs, rhs = tobittable(result), tobittable(args[i])
+				local xl, yl = #lhs, #rhs
+				local t, tl = {}, MathMax(xl, yl)
+				
+				for j = 0, tl - 1 do
+					local b1, b2 = lhs[xl - j], rhs[yl - j]
+					if not (b1 or b2) then
+						break
+					end
+					t[tl - j] = (cond((b1 or 0) ~= 0, (b2 or 0) ~= 0) and 1 or 0)
 				end
-				t[tl - i] = (cond((b1 or 0) ~= 0, (b2 or 0) ~= 0) and 1 or 0)
+				
+				result = Tonumber(TableConcat(t), 2)
 			end
-			return oper(Tonumber(TableConcat(t), 2), ...)
+			
+			return result
 		end
 		return oper
 	end
@@ -150,6 +184,7 @@ local getBitwise = (function()
 	return band, brshift, blshift
 end)
 local BitAnd, BitRShift, BitLShift = getBitwise()
+print(\"Bitwise operations initialized\")
 ";
 
 pub static DESERIALIZER: &str = "
@@ -463,6 +498,8 @@ local function run_lua_func(state, env, upvals)
 	while true do
 		local inst = code[pc]
 		local op = inst[$OPCODE$]
+		-- Debug: Print instruction being executed
+		if pc <= 10 then print(\"Executing instruction \" .. pc .. \" opcode \" .. op) end
 		pc = pc + 1
 
 ";
