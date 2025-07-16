@@ -37,12 +37,12 @@ pub fn get_opcode_string(opcode: &OpcodeType, opcode_list: &Vec<OpcodeType>) -> 
         OpcodeType::OpPow => "memory[inst[$A_REGISTER$]] = (constantB(inst) or 0) ^ (constantC(inst) or 0)".to_string(),
         OpcodeType::OpUnm => "memory[inst[$A_REGISTER$]] = -(memory[inst[$B_REGISTER$]] or 0)".to_string(),
         OpcodeType::OpNot => "memory[inst[$A_REGISTER$]] = not memory[inst[$B_REGISTER$]]".to_string(),
-        OpcodeType::OpLen => "memory[inst[$A_REGISTER$]] = #memory[inst[$B_REGISTER$]]".to_string(),
+        OpcodeType::OpLen => "memory[inst[$A_REGISTER$]] = #(memory[inst[$B_REGISTER$]] or '')".to_string(),
         OpcodeType::OpConcat => {
             "local B = inst[$B_REGISTER$]
-        local str = memory[B]
+        local str = memory[B] or ''
 
-        for i = B + 1, inst[$C_REGISTER$] do str = str .. memory[i] end
+        for i = B + 1, inst[$C_REGISTER$] do str = str .. (memory[i] or '') end
 
         memory[inst[$A_REGISTER$]] = str".to_string()
         }
@@ -138,9 +138,9 @@ pub fn get_opcode_string(opcode: &OpcodeType, opcode_list: &Vec<OpcodeType>) -> 
         -- limit = assert(tonumber(memory[A + 1]), '`for` limit must be a number')
         -- step = assert(tonumber(memory[A + 2]), '`for` step must be a number')
 
-        local init = Tonumber(memory[A])
-        local limit = Tonumber(memory[A + 1])
-        local step = Tonumber(memory[A + 2])
+        local init = Tonumber(memory[A]) or 0
+        local limit = Tonumber(memory[A + 1]) or 0
+        local step = Tonumber(memory[A + 2]) or 1
 
         memory[A] = init - step
         memory[A + 1] = limit

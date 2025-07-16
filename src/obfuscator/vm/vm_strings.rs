@@ -24,18 +24,30 @@ local Pairs = pairs
 local IPairs = ipairs
 local TableConcat = Table.concat
 local TableInsert = Table.insert
-local function TableUnpack(tbl, i, j)
+local function TableUnpack(tbl, i, j, depth)
     i = i or 1
     j = j or #tbl
+    depth = depth or 0
+    
+    -- Protection against infinite recursion
+    if depth > 10 then
+        error(\"TableUnpack recursion depth exceeded\")
+    end
+    
     if j-i+1 >= 10 then
         return tbl[i], tbl[i + 1], tbl[i + 2], tbl[i + 3], tbl[i + 4],
                tbl[i + 5], tbl[i + 6], tbl[i + 7], tbl[i + 8], tbl[i + 9],
-               TableUnpack(tbl, i + 10, j)
+               TableUnpack(tbl, i + 10, j, depth + 1)
     end
-    if i <= j then return tbl[i], TableUnpack(tbl, i + 1, j) end
+    if i <= j then return tbl[i], TableUnpack(tbl, i + 1, j, depth + 1) end
 end
 local TableCreate = function(len)
-	return {TableUnpack({}, 1, len or 1)}
+	-- Simplified table creation without calling TableUnpack on empty table
+	local tbl = {}
+	for i = 1, len or 1 do
+		tbl[i] = nil
+	end
+	return tbl
 end
 local TablePack = function(...)
 	return { n = Select(StringChar(35), ...), ... }
@@ -79,13 +91,38 @@ end
 
 local getBitwise = (function()
 	local function tobittable_r(x, ...)
-		if (x or 0) == 0 then
-			return ...
+		-- Iterative approach to avoid deep recursion
+		local bits = {}
+		local num = x or 0
+		
+		-- Safety check for infinite loops
+		local iterations = 0
+		while num > 0 and iterations < 100 do
+			bits[#bits + 1] = num % 2
+			num = MathFloor(num / 2)
+			iterations = iterations + 1
 		end
-		return tobittable_r(MathFloor(x / 2), x % 2, ...)
+		
+		-- Add any additional arguments
+		local args = {...}
+		for i = 1, #args do
+			bits[#bits + 1] = args[i]
+		end
+		
+		-- Reverse to match original order
+		local result = {}
+		for i = #bits, 1, -1 do
+			result[#result + 1] = bits[i]
+		end
+		
+		return TableUnpack(result)
 	end
 
 	local function tobittable(x)
+		-- Ensure x is a valid number
+		if type(x) ~= \"number\" or x ~= x then -- NaN check
+			return { 0 }
+		end
 		if x == 0 then
 			return { 0 }
 		end
@@ -94,20 +131,29 @@ local getBitwise = (function()
 
 	local function makeop(cond)
 		local function oper(x, y, ...)
-			if not y then
-				return x
-			end
-			x, y = tobittable(x), tobittable(y)
-			local xl, yl = #x, #y
-			local t, tl = {}, MathMax(xl, yl)
-			for i = 0, tl - 1 do
-				local b1, b2 = x[xl - i], y[yl - i]
-				if not (b1 or b2) then
-					break
+			-- Handle multiple arguments iteratively instead of recursively
+			local args = {x, y, ...}
+			local result = args[1]
+			
+			for i = 2, #args do
+				if args[i] == nil then break end
+				
+				local lhs, rhs = tobittable(result), tobittable(args[i])
+				local xl, yl = #lhs, #rhs
+				local t, tl = {}, MathMax(xl, yl)
+				
+				for j = 0, tl - 1 do
+					local b1, b2 = lhs[xl - j], rhs[yl - j]
+					if not (b1 or b2) then
+						break
+					end
+					t[tl - j] = (cond((b1 or 0) ~= 0, (b2 or 0) ~= 0) and 1 or 0)
 				end
-				t[tl - i] = (cond((b1 or 0) ~= 0, (b2 or 0) ~= 0) and 1 or 0)
+				
+				result = Tonumber(TableConcat(t), 2)
 			end
-			return oper(Tonumber(TableConcat(t), 2), ...)
+			
+			return result
 		end
 		return oper
 	end
@@ -463,6 +509,8 @@ local function run_lua_func(state, env, upvals)
 	while true do
 		local inst = code[pc]
 		local op = inst[$OPCODE$]
+		-- Debug: Print instruction being executed
+		if pc <= 10 then print(\"Executing instruction \" .. pc .. \" opcode \" .. op) end
 		pc = pc + 1
 
 ";
