@@ -672,6 +672,10 @@ local function run_lua_func(state, env, upvals)
 				rhs = memory[inst.C]
 			end
 
+			-- FiveM compatibility: treat nil as 0 in arithmetic operations
+			lhs = lhs or 0
+			rhs = rhs or 0
+
 			memory[inst.A] = lhs + rhs
 		elseif op == 13 then
 			--[[SUB]]
@@ -688,6 +692,10 @@ local function run_lua_func(state, env, upvals)
 			else
 				rhs = memory[inst.C]
 			end
+
+			-- FiveM compatibility: treat nil as 0 in arithmetic operations
+			lhs = lhs or 0
+			rhs = rhs or 0
 
 			memory[inst.A] = lhs - rhs
 		elseif op == 14 then
@@ -706,6 +714,10 @@ local function run_lua_func(state, env, upvals)
 				rhs = memory[inst.C]
 			end
 
+			-- FiveM compatibility: treat nil as 0 in arithmetic operations
+			lhs = lhs or 0
+			rhs = rhs or 0
+
 			memory[inst.A] = lhs * rhs
 		elseif op == 15 then
 			--[[DIV]]
@@ -722,6 +734,10 @@ local function run_lua_func(state, env, upvals)
 			else
 				rhs = memory[inst.C]
 			end
+
+			-- FiveM compatibility: treat nil as 0 in arithmetic operations
+			lhs = lhs or 0
+			rhs = rhs or 0
 
 			memory[inst.A] = lhs / rhs
 		elseif op == 16 then
@@ -740,6 +756,10 @@ local function run_lua_func(state, env, upvals)
 				rhs = memory[inst.C]
 			end
 
+			-- FiveM compatibility: treat nil as 0 in arithmetic operations
+			lhs = lhs or 0
+			rhs = rhs or 0
+
 			memory[inst.A] = lhs % rhs
 		elseif op == 17 then
 			--[[POW]]
@@ -757,16 +777,29 @@ local function run_lua_func(state, env, upvals)
 				rhs = memory[inst.C]
 			end
 
+			-- FiveM compatibility: treat nil as 0 in arithmetic operations
+			lhs = lhs or 0
+			rhs = rhs or 0
+
 			memory[inst.A] = lhs ^ rhs
 		elseif op == 18 then
 			--[[UNM]]
-			memory[inst.A] = -memory[inst.B]
+			local value = memory[inst.B]
+			-- FiveM compatibility: treat nil as 0 in arithmetic operations
+			value = value or 0
+			memory[inst.A] = -value
 		elseif op == 19 then
 			--[[NOT]]
 			memory[inst.A] = not memory[inst.B]
 		elseif op == 20 then
 			--[[LEN]]
-			memory[inst.A] = #memory[inst.B]
+			local value = memory[inst.B]
+			-- FiveM compatibility: handle nil values safely
+			if value == nil then
+				memory[inst.A] = 0
+			else
+				memory[inst.A] = #value
+			end
 		elseif op == 21 then
 			--[[CONCAT]]
 			local B = inst.B
@@ -931,9 +964,9 @@ local function run_lua_func(state, env, upvals)
 			-- limit = assert(tonumber(memory[A + 1]), '`for` limit must be a number')
 			-- step = assert(tonumber(memory[A + 2]), '`for` step must be a number')
 
-			local init = Tonumber(memory[A])
-			local limit = Tonumber(memory[A + 1])
-			local step = Tonumber(memory[A + 2])
+			local init = Tonumber(memory[A]) or 0
+			local limit = Tonumber(memory[A + 1]) or 0
+			local step = Tonumber(memory[A + 2]) or 1
 
 			memory[A] = init - step
 			memory[A + 1] = limit
