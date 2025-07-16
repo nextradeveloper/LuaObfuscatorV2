@@ -9,7 +9,7 @@ impl ObfuscationSettings {
     pub fn new() -> Self {
         Self {
             include_debug_line_info: false,
-            compress_bytecode: false,  // Disable compression to avoid decompression infinite loops
+            compress_bytecode: true,   // Use compression like the working example
             encrypt_strings: true,
         }
     }
