@@ -110,7 +110,7 @@ fn main() {
     if args.run {
         println!("[Obfuscator] Running...");
 
-        let output = Command::new("luac")
+        let output = Command::new("lua5.1")
             .arg(FINAL_FILE)
             .current_dir("temp")
             .output()
