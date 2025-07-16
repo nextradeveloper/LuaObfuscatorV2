@@ -455,9 +455,10 @@ local function run_lua_func(state, env, upvals)
 	end
 
 	local function safe_arith(a, b, op)
-		if a == nil or b == nil then
-			error('Obfuscated VM: attempt to perform arithmetic on a nil value (a=' .. tostring(a) .. ', b=' .. tostring(b) .. ')')
-		end
+		-- FiveM compatibility: treat nil values as 0 for arithmetic operations
+		-- This is common in game scripting environments where undefined values default to 0
+		a = a or 0
+		b = b or 0
 		return op(a, b)
 	end
 

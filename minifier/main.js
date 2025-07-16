@@ -64,7 +64,7 @@ const stringMap = {
   ["stringsList"]: stringString,
 };
 
-let funcArgNames = ["numericsList", "stringsList"].sort(() => Math.random() - 0.5)
+let funcArgNames = ["numericsList", "stringsList"] // FiveM compatibility: keep consistent parameter order
 
 fs.writeFileSync(
   "../temp/temp4.lua",
