@@ -1,4 +1,5 @@
 pub static VARIABLE_DECLARATION: &str = "
+print(\"VM loaded\")
 local String = string
 local StringChar = String.char
 local StringByte = String.byte
@@ -380,7 +381,9 @@ end
 
 pub static DESERIALIZER_2: &str = "
 function stm_lua_func(stream, psrc)
+	print(\"stm_lua_func called\")
 	local src = stm_lstring(stream) or psrc -- source is propagated
+	print(\"stm_lstring completed, src:\", src or \"nil\")
 
 	local proto = {}
 	proto[$SOURCE_NAME$] = src
@@ -390,6 +393,7 @@ function stm_lua_func(stream, psrc)
 
 	proto[$UPVALUE_COUNT$] = stm_byte(stream) -- num upvalues
 	proto[$PARAMETER_COUNT$] = stm_byte(stream) -- num params
+	print(\"Basic info parsed, upvalue_count:\", proto[$UPVALUE_COUNT$], \"param_count:\", proto[$PARAMETER_COUNT$])
 
 
 	-- stm_byte(stream) -- vararg flag
@@ -506,6 +510,7 @@ local function run_lua_func(state, env, upvals)
 		return inst[$IS_KC$] and inst[$CONST_C$] or memory[inst[$C_REGISTER$]]
 	end
 
+	print(\"VM starting execution\")
 	while true do
 		local inst = code[pc]
 		local op = inst[$OPCODE$]
@@ -522,6 +527,7 @@ function lua_wrap_state(proto, env, upval)
 	env = env or Getfenv(0)
 
 	local function wrapped(...)
+		print(\"Wrapper function called\")
 		local passed = TablePack(...)
 		local memory = TableCreate()
 		local vararg = {0, {}}

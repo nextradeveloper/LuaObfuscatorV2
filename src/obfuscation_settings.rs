@@ -9,7 +9,7 @@ impl ObfuscationSettings {
     pub fn new() -> Self {
         Self {
             include_debug_line_info: false,
-            compress_bytecode: true,   // Re-enable compression 
+            compress_bytecode: false,  // Disable compression to debug core VM issues first
             encrypt_strings: true,
         }
     }
